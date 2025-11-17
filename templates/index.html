@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <link rel="icon" href="/static/favicon.ico"/>
+  <title>AI Chat Service</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { 
+      color-scheme: light dark;
+      --bg: #ffffff;
+      --surface: #ffffff;
+      --text: #000000;
+      --text-secondary: #000000;
+      --border: #000000;
+      --user-bg: #000000;
+      --user-text: #ffffff;
+      --assistant-bg: #ffffff;
+      --assistant-text: #000000;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #000000;
+        --surface: #000000;
+        --text: #ffffff;
+        --text-secondary: #000000;
+        --border: #000000;
+        --user-bg: #ffffff;
+        --user-text: #000000;
+        --assistant-bg: #000000;
+        --assistant-text: #ffffff;
+      }
+    }
+
+    @font-face {
+            font-family: 'NanumSquare';
+            src: url("../static/fonts/NanumSquareB.otf") format("truetype");
+            font-weight: bold;
+            font-style: normal;
+        }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body { 
+      font-family: 'NanumSquare', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto;
+      background: var(--bg);
+      color: var(--text);
+      padding: 20px;
+      max-width: 80vw;
+      max-height: 95vh;
+      margin: 0 auto;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+    
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      letter-spacing: -0.02em;
+    }
+    
+    .toolbar { 
+      display: flex; 
+      gap: 16px; 
+      align-items: center; 
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .toolbar label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    
+    .chat { 
+      background: transparent;
+      border: none;
+      padding: 20px 0;
+      min-height: 550px;
+      max-height: 550px;
+      overflow-y: auto;
+      margin-bottom: 20px;
+    }
+    
+    .chat::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .chat::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    .chat::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
+    }
+    
+    .bubble { 
+      padding: 12px 16px;
+      border-radius: 18px;
+      margin: 8px 0;
+      white-space: pre-wrap;
+      max-width: 75%;
+      word-wrap: break-word;
+      animation: fadeSlideIn 0.3s ease;
+    }
+    
+    @keyframes fadeSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .user { 
+      background: var(--user-bg);
+      color: var(--user-text);
+      margin-left: auto;
+      border-bottom-right-radius: 4px;
+    }
+    
+    .assistant { 
+      background: var(--assistant-bg);
+      color: var(--assistant-text);
+      margin-right: auto;
+      border-bottom-left-radius: 4px;
+      border: 1px solid var(--border);
+    }
+    
+    .input-area {
+      margin-top: 20px;
+    }
+    
+    .input-area label {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+    }
+    
+    textarea { 
+      width: 100%;
+      min-height: 100px;
+      padding: 12px;
+      border: 1px solid var(--text);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text);
+      font-size: 15px;
+      resize: vertical;
+      font-family: 'NanumSquare', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto;
+      transition: border-color 0.2s ease;
+    }
+    
+    textarea:focus {
+      outline: none;
+      border-color: var(--text);
+    }
+    
+    input { 
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--text);
+      font-size: 14px;
+      font-family: 'NanumSquare', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto;
+      transition: border-color 0.2s ease;
+    }
+    
+    input:focus {
+      outline: none;
+      border-color: var(--text);
+    }
+    
+    button { 
+      padding: 10px 20px;
+      border: 1px solid var(--text);
+      border-radius: 8px;
+      background: var(--text);
+      color: var(--bg);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      font-family: 'NanumSquare', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto;
+      transition: all 0.2s ease;
+    }
+    
+    button:hover:not(:disabled) {
+      opacity: 0.85;
+      transform: translateY(-1px);
+    }
+    
+    button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    button#clear {
+      background: transparent;
+      color: var(--text);
+      border-color: var(--border);
+    }
+    
+    button#clear:hover:not(:disabled) {
+      background: var(--surface);
+    }
+    
+    .row { 
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .small { 
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    
+    .spinner { 
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid currentColor;
+      border-right-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin-right: 6px;
+    }
+    
+    @keyframes spin { 
+      to { transform: rotate(360deg); } 
+    }
+  </style>
+</head>
+<body>
+  <h1>AI Chat Service</h1>
+
+  <div class="toolbar">
+    <label>
+      Model
+      <input id="model" value="gemma3:4b" title="모델명 입력"/>
+    </label>
+    <span class="small">/모델을 변경하려면 새로운 모델명을 입력하고 대화를 시작하세요<br>/gemma3:4b | llama2 | exaone3.5 모델 사용 가능</span>
+  </div>
+
+  <div class="chat" id="chat"></div>
+
+  <div class="input-area">
+    <label for="prompt">Message</label>
+    <textarea id="prompt" placeholder="메시지를 입력하세요. Shift+Enter로 줄바꿈, Enter로 전송"></textarea>
+    <div class="row">
+      <div class="small">역할 메시지(system)나 이전 대화는 자동으로 유지됩니다.</div>
+      <div class="button-group">
+        <button id="send" title="메시지 전송">Send</button>
+        <button id="clear" title="대화 초기화">Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const chatDiv = $("chat");
+    const modelInput = $("model");
+    const promptTA = $("prompt");
+    const sendBtn = $("send");
+    const clearBtn = $("clear");
+
+    const history = [
+       { role: "system", content: "너는 사용자의 친절한 친구야." }
+    ];
+
+    function addBubble(role, text, attachId = null) {
+      const div = document.createElement("div");
+      div.className = `bubble ${role}`;
+      if (attachId) div.dataset.attachId = attachId;
+      div.textContent = text;
+      chatDiv.appendChild(div);
+      chatDiv.scrollTop = chatDiv.scrollHeight;
+      return div;
+    }
+
+    function updateAttachedBubble(attachId, appendText) {
+      const node = [...chatDiv.querySelectorAll(".bubble")]
+        .find(n => n.dataset.attachId === attachId);
+      if (node) {
+        node.textContent += appendText;
+        chatDiv.scrollTop = chatDiv.scrollHeight;
+      }
+    }
+
+    function setSending(isSending) {
+      sendBtn.disabled = isSending;
+      modelInput.disabled = isSending;
+      promptTA.disabled = isSending;
+      sendBtn.innerHTML = isSending ? `<span class="spinner"></span>Sending` : `Send`;
+    }
+
+    async function sendMessage() {
+      const content = promptTA.value.trim();
+      if (!content) return;
+      promptTA.value = "";
+
+      addBubble("user", content);
+      history.push({ role: "user", content });
+
+      const attachId = String(Date.now());
+      addBubble("assistant", "", attachId);
+
+      setSending(true);
+
+      try {
+        const resp = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: modelInput.value || "llama3",
+            messages: history,
+          }),
+        });
+
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+
+        let assistantAccum = "";
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+
+          for (const line of chunk.split("\n")) {
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+
+            try {
+              const obj = JSON.parse(trimmed);
+              if (obj.message && typeof obj.message.content === "string") {
+                assistantAccum += obj.message.content;
+                updateAttachedBubble(attachId, obj.message.content);
+              }
+              if (obj.done) {
+                history.push({ role: "assistant", content: assistantAccum });
+              }
+            } catch (e) {
+              // 파싱 실패 라인은 무시
+            }
+          }
+        }
+      } catch (e) {
+        updateAttachedBubble(attachId, "\n[에러] 응답을 가져오는 중 문제가 발생했습니다.");
+        console.error(e);
+      } finally {
+        setSending(false);
+      }
+    }
+
+    promptTA.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+    sendBtn.addEventListener("click", sendMessage);
+
+    clearBtn.addEventListener("click", () => {
+      chatDiv.innerHTML = "";
+      history.length = 0;
+    });
+  </script>
+</body>
+</html>
